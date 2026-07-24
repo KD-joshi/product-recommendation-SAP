@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-similarity-api
+  labels:
+    app: product-similarity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-similarity
+  template:
+    metadata:
+      labels:
+        app: product-similarity
+    spec:
+      containers:
+        - name: product-similarity
+          image: product-similarity:latest
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
+          # Readiness probe: don't route traffic until index is loaded
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          # Liveness probe: restart if pod stops responding
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+          env:
+            - name: HNSW_M
+              value: "32"
+            - name: HNSW_EF_SEARCH
+              value: "64"
+            - name: LRU_CACHE_SIZE
+              value: "1024"
