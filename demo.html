@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimodal AI Product Search</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #FAFAF8;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --accent-primary: #FF5A00;
+            --accent-secondary: #3B82F6;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --border-light: rgba(0, 0, 0, 0.08);
+            --font-body: 'Inter', sans-serif;
+            --font-display: 'Playfair Display', serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: linear-gradient(135deg, #FDFCFB 0%, #E2D1C3 100%);
+            color: var(--text-main);
+            padding: 60px 20px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Animated background blobs optimized with radial gradients instead of heavy filters */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.8;
+            animation: float 20s infinite ease-in-out alternate;
+            will-change: transform;
+        }
+        
+        .blob-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 90, 0, 0.12) 0%, rgba(255, 90, 0, 0) 70%);
+            top: -150px;
+            left: -150px;
+        }
+        
+        .blob-2 {
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0) 70%);
+            bottom: -250px;
+            right: -150px;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, 30px) scale(1.1); }
+            100% { transform: translate(-30px, 50px) scale(0.9); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #111827 0%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            font-family: var(--font-body);
+            font-weight: 500;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 90, 0, 0.4);
+            border-radius: 100px;
+            padding: 15px 20px;
+            margin-bottom: 60px;
+            display: flex;
+            gap: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 0 0 15px rgba(255, 90, 0, 0.1);
+            align-items: center;
+        }
+
+        input, select {
+            padding: 15px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 90, 0, 0.4);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--text-main);
+        }
+
+        input {
+            flex: 1;
+            min-width: 250px;
+            font-weight: 500;
+        }
+
+        input:focus, select:focus {
+            background: #ffffff;
+            border-color: rgba(255, 90, 0, 0.3);
+            box-shadow: 0 0 0 4px rgba(255, 90, 0, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #FF8A00 100%);
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border-radius: 50px;
+            border: none;
+            padding: 15px 35px;
+            box-shadow: 0 10px 20px rgba(255, 90, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(255, 90, 0, 0.4);
+        }
+
+        .results-section {
+            display: none;
+        }
+        
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            margin: 50px 0 30px 0;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-color: rgba(255, 90, 0, 0.3);
+            will-change: transform;
+        }
+
+        .query-card {
+            background: #ffffff;
+            border: 2px solid var(--accent-secondary);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15);
+        }
+
+        .card-img-container {
+            width: 100%;
+            height: 280px;
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.6s ease;
+        }
+        
+        .card:hover img {
+            transform: scale(1.08);
+        }
+
+        .card-content {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
+        }
+
+        .brand {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent-primary);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .title {
+            font-weight: 600;
+            font-size: 1.15rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        .meta {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+        }
+
+        .price {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #10B981;
+        }
+
+        .score-badge {
+            background: rgba(255, 90, 0, 0.1);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            border: 1px solid rgba(255, 90, 0, 0.2);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            color: var(--accent-primary);
+            margin: 60px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+        
+        .loading::after {
+            content: '';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="container">
+    <div class="header">
+        <h1 style="font-size: 2.8rem;">Multimodal Product Similarity Search</h1>
+        <p>Powered by FashionCLIP 2.0 and Hybrid BM25/Cross-Encoder Fusion.</p>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="uid" placeholder="Enter Product UID..." value="ad8a5a196d515ef09dfdaf082bdc37c4">
+        
+        <select id="mode">
+            <option value="combined">Combined Fusion</option>
+            <option value="image">Image Only (CLIP)</option>
+            <option value="text_structured">Text (Sentence-BERT)</option>
+        </select>
+        
+        <select id="num">
+            <option value="5">Top 5</option>
+            <option value="10" selected>Top 10</option>
+            <option value="20">Top 20</option>
+        </select>
+        
+        <button onclick="search()">Search</button>
+    </div>
+
+    <div id="loading" class="loading">Querying Vector Graph</div>
+    
+    <div id="resultsArea" class="results-section">
+        <div class="section-title">Target Object</div>
+        <div id="queryProduct" style="max-width: 400px; margin-bottom: 50px;"></div>
+        
+        <div class="section-title">Similar Products</div>
+        <div id="similarProducts" class="grid"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("uid").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            search();
+        }
+    });
+
+    async function search() {
+        const uid = document.getElementById('uid').value.trim();
+        const mode = document.getElementById('mode').value;
+        const num = document.getElementById('num').value;
+        
+        if (!uid) return alert('Please enter a UID');
+        
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('resultsArea').style.display = 'none';
+        
+        try {
+            const res = await fetch(`http://localhost:8000/find_similar_products_detailed?product_id=${uid}&num_similar=${num}&mode=${mode}`);
+            const data = await res.json();
+            
+            if (res.status !== 200) throw new Error(data.detail || "Server error");
+            
+            renderQueryProduct(data.query_product);
+            renderSimilarProducts(data.similar_products);
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('resultsArea').style.display = 'block';
+            
+        } catch (err) {
+            document.getElementById('loading').style.display = 'none';
+            alert("Error: " + err.message);
+        }
+    }
+
+    function createCard(product, isQuery = false) {
+        const price = product.sales_price ? `₹${product.sales_price}` : 'N/A';
+        const img = product.image_url ? product.image_url : 'https://via.placeholder.com/400x400?text=No+Image';
+        
+        const scoreHtml = !isQuery && product.similarity_score !== undefined 
+            ? `<div class="score-badge">Score: ${product.similarity_score.toFixed(4)}</div>` 
+            : '';
+
+        return `
+            <div class="card ${isQuery ? 'query-card' : ''}">
+                <div class="card-img-container">
+                    <img src="${img}" alt="Product Image" onerror="this.src='https://via.placeholder.com/400x400?text=Broken+Link'">
+                </div>
+                <div class="card-content">
+                    <div class="brand">${product.brand || 'Unknown'}</div>
+                    <div class="title">${product.product_name || 'No Title'}</div>
+                    <div class="meta">
+                        <div class="price">${price}</div>
+                        ${scoreHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderQueryProduct(product) {
+        document.getElementById('queryProduct').innerHTML = createCard(product, true);
+    }
+
+    function renderSimilarProducts(products) {
+        const grid = document.getElementById('similarProducts');
+        grid.innerHTML = products.map(p => createCard(p)).join('');
+    }
+</script>
+
+</body>
+</html>
